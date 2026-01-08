@@ -1,0 +1,47 @@
+let agoArray = [];
+function initAgo(){
+  let x = -100
+  let length = 300;
+  let eyeWidth = 20;
+  let eyeHeight = 30;
+  let dx = 2;
+  for (let i = 0; i < 5; i++){
+    let y = randomIntFromRanger(canva.height / 4, (canva.height * 3) / 4);
+    let delay = i * 20;
+    agoArray.push(new Ago(x,y,length,eyeWidth,eyeHeight,dx,"#A8A9AD", delay));
+  }
+}
+
+// let rett;
+// function init() {
+//   let x = canva.width / 2 - 250;
+//   var dy = 10;
+//   let y = 0;
+//   rett = new Rettangolo(x, y, dy, 500, 100, "green");
+// }
+
+// function animate(){
+//     requestAnimationFrame(animate);
+//     context.clearRect(0,0,canva.width,canva.height);
+//     rett.update();
+// }
+
+// init();
+// animate();
+
+function animateAgo() {
+  requestAnimationFrame(animateAgo);
+  context.clearRect(0, 0, canva.width, canva.height);
+  for (let i = 0; i < agoArray.length; i++){
+    
+agoArray[i].update();
+
+  }
+}
+
+const div = document.getElementById("test");
+
+div.addEventListener("click", () => {
+  initAgo();
+  animateAgo();
+});
