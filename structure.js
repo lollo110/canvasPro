@@ -117,7 +117,7 @@ context.fill();
   }
 }
 
-const ago = new Ago(-100, canva.height / 2, 200, 20, 30, 2);
+const ago = new Ago(-100, canva.height / 2, 150, 20, 30, 2);
 
 function animateAgo() {
   requestAnimationFrame(animateAgo);
