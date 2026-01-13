@@ -45,3 +45,80 @@ div.addEventListener("click", () => {
   initAgo();
   animateAgo();
 });
+
+
+
+
+
+
+
+
+class Fiber {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.dx = (Math.random() - 0.5) * 4;
+    this.dy = (Math.random() - 0.5) * 4;
+    this.life = 40;
+  }
+
+  update() {
+    this.x += this.dx;
+    this.y += this.dy;
+    this.dy += 0.1;
+    this.life--;
+    this.draw();
+  }
+
+  draw() {
+    context.strokeStyle = "#e79ebd";
+    context.beginPath();
+    context.moveTo(this.x, this.y);
+    context.lineTo(this.x - this.dx*2, this.y - this.dy*2);
+    context.stroke();
+  }
+}
+const ago = new Ago(-100, canva.height - 250, 150, 20, 30, 2);
+let rett = new RettangoloTagliabile(
+  canva.width / 2,
+  canva.height / 2,
+  500,
+  200
+);
+
+function animateAgo() {
+  requestAnimationFrame(animateAgo);
+  context.clearRect(0, 0, canva.width, canva.height);
+  ago.update();
+  rett.update();
+
+  fibers = fibers.filter(f => f.life > 0);
+  fibers.forEach(f => f.update());
+
+  if(!splitTriggered && ago.cutPath.length > 0) {
+    splitTriggered = true;
+    rett.applyCut(ago.cutPath);
+  }
+}
+
+
+
+let rett = new Rettangolo(
+  canva.width / 2,
+  canva.height / 2 - 100,
+  1,
+  1,
+  500,
+  200
+);
+let rett2 = new Rettangolo(
+  canva.width / 2,
+  canva.height / 2 + 100,
+  1,
+  1,
+  500,
+  200
+);
+
+rett.draw();
+rett2.draw();

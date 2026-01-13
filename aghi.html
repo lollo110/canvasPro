@@ -5,25 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+        body{
+            background-color: #e5d6c0;
+            overflow: hidden;
+        }
         canvas{
             position: absolute;
             z-index: -1;
         }
-        div{
-            background-color: aqua;
-            width: 10vw;
-            height: 10vh;
+        #test{
+            background-color: #e79ebd;
+            width: 10%;
+            height: 10%;
             cursor: pointer;
             position: absolute;
-            top: 25%;
+            top: 80%;
             left: 50%;
             transform: translate(-50%,-50%);
+            text-align: center;
+        }
+
+        p{
+            margin-top: 18%;
+            color: white;
+        }
+        img{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%) scale(0.2);
+            transform-origin: center center;
+            transition: transform 3s ease-in;
+            z-index: -2;
         }
     </style>
 </head>
 <body>
     <canvas></canvas>
-    <div id="test"></div>
+    <img src="./logo.png" alt="logo sito">
+    <div id="test">
+        <p>Bienvenue</p>
+    </div>
     <script src="./structure.js"></script>
 </body>
 </html>
