@@ -2,12 +2,14 @@ let canva = document.querySelector("canvas");
 let context = canva.getContext("2d");
 let image = document.querySelector("img");
 
-canva.width = window.innerWidth -20;
+canva.width = window.innerWidth - 20;
 canva.height = window.innerHeight;
 
 var gravity = 1;
 var friction = 0.9;
 let splitTriggered = false;
+
+// --------------- AGO --------------------
 
 class Ago {
   constructor(x, y, length, eyeWidth, eyeHeight, dx, color = "#A8A9AD") {
@@ -91,7 +93,13 @@ class Ago {
     if (this.thread.length > this.maxThreadLength) {
       this.thread.pop();
     }
-    this.dx += 0.02;
+    let accel = 0.02;
+
+    if (splitTriggered) {
+      accel += 0.1;
+    }
+
+    this.dx += accel;
     this.x += this.dx;
     this.t += 0.02;
 
@@ -103,48 +111,53 @@ class Ago {
     this.drawThread();
     this.draw();
 
-    const angle = Math.cos(this.t) * 0.5 + Math.cos(this.t * 3) * 0.15;
-    const tipX = this.x + Math.cos(angle) * (this.length * 0.9);
-    const tipY = this.x + Math.sin(angle) * (this.length * 0.9);
+    const eyeX = this.x;
+    const lastR = retts[3];
+    const right = lastR.cx + lastR.width / 2;
 
-    const leftEdgeX = rett.cx - rett.width / 2;
-    const topY = rett.cy - rett.height / 2;
-    const bottomY = rett2.cy + rett2.height / 2;
-
-    if (!splitTriggered && tipX >= leftEdgeX) {
+    if (!splitTriggered && eyeX > right) {
       splitTriggered = true;
-      rett.active = true;
-      rett2.active = true;
+      retts.forEach((r) => (r.following = true));
 
-      rett.dy = -3;
-      rett2.dy = 3;
-      
       image.style.zIndex = "2";
       image.style.transform = "translate(-50%,-50%)scale(2)";
     }
   }
 }
 
+// --------------------- Rettangolo --------------------
+
 class Rettangolo {
-  constructor(cx, cy, dx, dy, width, height) {
+  constructor(cx, cy, width, height, followIndex) {
     this.cx = cx;
     this.cy = cy;
-    this.dx = dx;
-    this.dy = dy;
     this.width = width;
     this.height = height;
-    this.active = false;
+    this.followIndex = followIndex;
+    this.following = false;
+    this.angle = 0;
   }
 
-  update() {
-    if (this.active) {
-      this.cy += this.dy;
+  follow(thread) {
+    if (thread[this.followIndex]) {
+      const targetX = thread[this.followIndex].x;
+      const targetY = thread[this.followIndex].y;
+      this.cx += (targetX - this.cx) * 0.1;
+      this.cy += (targetY - this.cy) * 0.1;
+      this.angle = Math.sin(Date.now() * 0.002 + this.followIndex) * 0.3;
+    }
+  }
+
+  update(thread) {
+    if (this.following) {
+      this.follow(thread);
     }
     this.draw();
   }
 
   draw() {
     context.beginPath();
+
     context.fillStyle = "#e79ebd";
 
     context.fillRect(
@@ -156,42 +169,146 @@ class Rettangolo {
   }
 }
 
-const ago = new Ago(-100, canva.height - 250, 150, 20, 30, 2);
+// --------------------- Fili -------------------------
 
-function animateAgo() {
-  requestAnimationFrame(animateAgo);
-  context.clearRect(0, 0, canva.width, canva.height);
-  ago.update();
-  rett.update();
-  rett2.update();
+class Filo {
+  constructor() {
+    this.reset();
+    this.phase = Math.random() * Math.PI * 2;
+  }
 
+  reset() {
+    this.x = Math.random() * canva.width;
+    this.y = -50 - Math.random() * canva.height;
+    this.length = 60 + Math.random() * 80;
+    this.speed = 0.3 + Math.random() * 0.6;
+    this.amplitude = 6 + Math.random() * 8;
+    this.color = ["#f1b7cf", "#e79ebd", "#d6c1e0", "#e8dcc6"][
+      Math.floor(Math.random() * 4)
+    ];
+  }
 
+  update() {
+    this.phase += 0.02;
+    this.y += this.speed;
+    if (this.y - this.length > canva.height + 100) {
+      this.reset();
+    }
+    this.draw();
+  }
+
+  draw() {
+    const grad = context.createLinearGradient(
+      this.x,
+      this.y,
+      this.x,
+      this.y + this.length
+    );
+
+    grad.addColorStop(0, "rgba(255,255,255,0)");
+    grad.addColorStop(0.3, this.color);
+    grad.addColorStop(0.5, "rgba(255,255,255,0.6)");
+    grad.addColorStop(0.7, this.color);
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+
+    context.strokeStyle = grad;
+    context.lineWidth = 3;
+    context.lineCap = "round";
+
+    context.beginPath();
+
+    for (let i = 0; i <= this.length; i += 10) {
+      const offsetX = Math.sin(this.phase + i * 0.05) * this.amplitude;
+      const px = this.x + offsetX;
+      const py = this.y + i;
+
+      if (i === 0) context.moveTo(px, py);
+      else context.lineTo(px, py);
+    }
+    context.stroke();
+  }
 }
 
+// ---------------- MicroX --------------------
+
+class MicroX {
+  constructor() {
+    this.x = Math.random() * canva.width;
+    this.y = Math.random() * canva.height;
+    this.size = 3 + Math.random() * 3;
+    this.speed = 0.3 + Math.random() * 0.5;
+    this.rotation = Math.random() * Math.PI;
+    this.opacity = 0.7 + Math.random() * 0.3;
+  }
+
+  update() {
+    this.y += this.speed;
+    this.rotation += 0.01;
+
+    if (this.y > canva.height) {
+      this.y = -10;
+      this.x = Math.random() * canva.width;
+    }
+    this.draw();
+  }
+
+  draw() {
+    context.save();
+    context.translate(this.x, this.y);
+    context.rotate(this.rotation);
+    context.strokeStyle = `rgba(231,158,189,${this.opacity})`;
+    context.lineWidth = 0.8;
+
+    context.beginPath();
+    context.moveTo(-this.size, -this.size);
+    context.lineTo(this.size, this.size);
+    context.moveTo(this.size, -this.size);
+    context.lineTo(-this.size, this.size);
+    context.stroke();
+    context.restore();
+  }
+}
+
+const ago = new Ago(-100, canva.height - 250, 150, 20, 30, 2);
+const size = 100;
+const centerX = canva.width / 2;
+const centerY = canva.height / 2;
+
+let fili = [];
+let microXs = [];
+
+let retts = [
+  new Rettangolo(centerX - 1.5 * size, centerY, size, size, 55),
+  new Rettangolo(centerX - 0.5 * size, centerY, size, size, 40),
+  new Rettangolo(centerX + 0.5 * size, centerY, size, size, 25),
+  new Rettangolo(centerX + 1.5 * size, centerY, size, size, 10),
+];
+let agoAttivo = false;
+
+for (let i = 0; i < 50; i++) {
+  fili.push(new Filo());
+}
+for (let i = 0; i < 100; i++) {
+  microXs.push(new MicroX());
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  context.clearRect(0, 0, canva.width, canva.height);
+
+  microXs.forEach((x) => x.update());
+  fili.forEach((f) => f.update());
+  retts.forEach((r) => r.update(ago.thread));
+  if (agoAttivo) {
+    ago.update();
+  }
+}
 const div = document.getElementById("test");
 
 div.addEventListener("click", () => {
   canva.style.zIndex = "10";
 
-  animateAgo();
+  agoAttivo = true;
 });
 
-let rett = new Rettangolo(
-  canva.width / 2,
-  canva.height / 2 - 50,
-  1,
-  1,
-  500,
-  100
-);
-let rett2 = new Rettangolo(
-  canva.width / 2,
-  canva.height / 2 + 50,
-  1,
-  1,
-  500,
-  100
-);
-
-rett.draw();
-rett2.draw();
+animate();
