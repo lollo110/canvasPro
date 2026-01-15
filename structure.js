@@ -9,6 +9,13 @@ var gravity = 1;
 var friction = 0.9;
 let splitTriggered = false;
 
+const rectImages = [new Image(), new Image(), new Image(), new Image()];
+
+rectImages[0].src = "pend1.png";
+rectImages[1].src = "pend2.png";
+rectImages[2].src = "pend3.png";
+rectImages[3].src = "pend4.png";
+
 // --------------- AGO --------------------
 
 class Ago {
@@ -93,10 +100,10 @@ class Ago {
     if (this.thread.length > this.maxThreadLength) {
       this.thread.pop();
     }
-    let accel = 0.02;
+    let accel = 0.25;
 
     if (splitTriggered) {
-      accel += 0.1;
+      accel += 0.01;
     }
 
     this.dx += accel;
@@ -119,7 +126,7 @@ class Ago {
       splitTriggered = true;
       retts.forEach((r) => (r.following = true));
 
-      image.style.zIndex = "2";
+      image.style.opacity = "1";
       image.style.transform = "translate(-50%,-50%)scale(2)";
     }
   }
@@ -128,7 +135,7 @@ class Ago {
 // --------------------- Rettangolo --------------------
 
 class Rettangolo {
-  constructor(cx, cy, width, height, followIndex) {
+  constructor(cx, cy, width, height, followIndex, img) {
     this.cx = cx;
     this.cy = cy;
     this.width = width;
@@ -136,15 +143,17 @@ class Rettangolo {
     this.followIndex = followIndex;
     this.following = false;
     this.angle = 0;
+    this.img = img;
   }
 
   follow(thread) {
     if (thread[this.followIndex]) {
       const targetX = thread[this.followIndex].x;
-      const targetY = thread[this.followIndex].y;
+      const targetY = thread[this.followIndex].y + 50;
       this.cx += (targetX - this.cx) * 0.1;
       this.cy += (targetY - this.cy) * 0.1;
       this.angle = Math.sin(Date.now() * 0.002 + this.followIndex) * 0.3;
+
     }
   }
 
@@ -158,14 +167,21 @@ class Rettangolo {
   draw() {
     context.beginPath();
 
-    context.fillStyle = "#e79ebd";
+    context.shadowColor = "rgba(0, 0, 0, 0.25)";
+    context.shadowBlur = 20;
+    context.shadowOffsetX = 0;
+    context.shadowOffsetY = 10;
 
-    context.fillRect(
-      this.cx - this.width / 2,
-      this.cy - this.height / 2,
-      this.width,
-      this.height
-    );
+    if (this.img && this.img.complete) {
+      context.drawImage(
+        this.img,
+        this.cx - this.width / 2,
+        this.cy - this.height / 2,
+        this.width,
+        this.height
+
+      );
+    }
   }
 }
 
@@ -269,8 +285,8 @@ class MicroX {
   }
 }
 
-const ago = new Ago(-100, canva.height - 250, 150, 20, 30, 2);
-const size = 100;
+const ago = new Ago(-100, 200, 150, 20, 30, 2);
+const size = 200;
 const centerX = canva.width / 2;
 const centerY = canva.height / 2;
 
@@ -278,10 +294,10 @@ let fili = [];
 let microXs = [];
 
 let retts = [
-  new Rettangolo(centerX - 1.5 * size, centerY, size, size, 55),
-  new Rettangolo(centerX - 0.5 * size, centerY, size, size, 40),
-  new Rettangolo(centerX + 0.5 * size, centerY, size, size, 25),
-  new Rettangolo(centerX + 1.5 * size, centerY, size, size, 10),
+  new Rettangolo(centerX - 1.5 * size, centerY, size, size, 40, rectImages[0]),
+  new Rettangolo(centerX - 0.5 * size, centerY, size, size, 30, rectImages[1]),
+  new Rettangolo(centerX + 0.5 * size, centerY, size, size, 20, rectImages[2]),
+  new Rettangolo(centerX + 1.5 * size, centerY, size, size, 10, rectImages[3]),
 ];
 let agoAttivo = false;
 
