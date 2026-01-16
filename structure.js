@@ -5,6 +5,12 @@ let image = document.querySelector("img");
 canva.width = window.innerWidth - 20;
 canva.height = window.innerHeight;
 
+const path = {
+  p0: { x: -100, y: 150 },
+  p1: { x: canva.width / 2 - 100, y: canva.height - 240 },
+  p2: { x: canva.width + 100, y: 180 },
+};
+
 var gravity = 1;
 var friction = 0.9;
 let splitTriggered = false;
@@ -31,15 +37,17 @@ class Ago {
     this.t = 0;
     this.thread = [];
     this.maxThreadLength = 100;
+    this.tPath = 0;
+    this.speed = 0.01; // aumenta se vuoi più veloce
+    this.angle = 0;
+    this.angleSmooth = 0;
   }
   draw() {
     context.save();
     context.translate(this.x, this.y);
-    const angle = Math.cos(this.t) * 0.5 + Math.cos(this.t * 3) * 0.15;
-    context.rotate(angle);
+
+    context.rotate(this.angle);
     const startX = this.eyeHeight / 2;
-    const tipX = this.x + Math.cos(angle) * (this.length * 0.9);
-    const tipY = this.y + Math.sin(angle) * (this.length * 0.9);
 
     // Ellipse
     context.beginPath();
@@ -92,28 +100,33 @@ class Ago {
     context.stroke();
   }
   update() {
-    this.thread.unshift({
-      x: this.x,
-      y: this.y,
-    });
+    this.tPath += this.speed;
+    if (this.tPath > 1) this.tPath = 1;
 
+    const pos = quadraticBezier(path.p0, path.p1, path.p2, this.tPath);
+
+    // posizione
+    this.x = pos.x;
+    this.y = pos.y;
+
+    // 🔁 rotazione naturale (tangente)
+    const next = quadraticBezier(
+      path.p0,
+      path.p1,
+      path.p2,
+      Math.min(this.tPath + 0.01, 1)
+    );
+
+    const targetAngle = Math.atan2(next.y - this.y, next.x - this.x);
+
+    this.angleSmooth += (targetAngle - this.angleSmooth) * 0.15;
+    this.angle = this.angleSmooth;
+
+    // filo
+    this.thread.unshift({ x: this.x, y: this.y });
     if (this.thread.length > this.maxThreadLength) {
       this.thread.pop();
     }
-    let accel = 0.25;
-
-    if (splitTriggered) {
-      accel += 0.01;
-    }
-
-    this.dx += accel;
-    this.x += this.dx;
-    this.t += 0.02;
-
-    const large = Math.sin(this.t) * (canva.height / 4);
-    const micro = Math.sin(this.t * 3) * 20;
-
-    this.y = this.baseY + large + micro;
 
     this.drawThread();
     this.draw();
@@ -153,7 +166,6 @@ class Rettangolo {
       this.cx += (targetX - this.cx) * 0.1;
       this.cy += (targetY - this.cy) * 0.1;
       this.angle = Math.sin(Date.now() * 0.002 + this.followIndex) * 0.3;
-
     }
   }
 
@@ -179,7 +191,6 @@ class Rettangolo {
         this.cy - this.height / 2,
         this.width,
         this.height
-
       );
     }
   }
@@ -195,7 +206,7 @@ class Filo {
 
   reset() {
     this.x = Math.random() * canva.width;
-    this.y = -50 - Math.random() * canva.height;
+    this.y = -50;
     this.length = 60 + Math.random() * 80;
     this.speed = 0.3 + Math.random() * 0.6;
     this.amplitude = 6 + Math.random() * 8;
@@ -299,10 +310,20 @@ let retts = [
   new Rettangolo(centerX + 0.5 * size, centerY, size, size, 20, rectImages[2]),
   new Rettangolo(centerX + 1.5 * size, centerY, size, size, 10, rectImages[3]),
 ];
+
+function quadraticBezier(p0, p1, p2, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  };
+}
 let agoAttivo = false;
 
 for (let i = 0; i < 50; i++) {
-  fili.push(new Filo());
+  const f = new Filo();
+  f.y = Math.random() * canva.height; // distribuiti verticalmente
+  fili.push(f);
 }
 for (let i = 0; i < 100; i++) {
   microXs.push(new MicroX());
