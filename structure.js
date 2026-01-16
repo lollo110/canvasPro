@@ -161,7 +161,7 @@ class Rettangolo {
 
   follow(thread) {
     if (thread[this.followIndex]) {
-      const targetX = thread[this.followIndex].x;
+      const targetX = thread[this.followIndex].x + 100;
       const targetY = thread[this.followIndex].y + 50;
       this.cx += (targetX - this.cx) * 0.1;
       this.cy += (targetY - this.cy) * 0.1;
