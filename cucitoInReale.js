@@ -4,6 +4,12 @@ const context = canva.getContext("2d");
 canva.width = innerWidth;
 canva.height = innerHeight;
 
+function resizeCanvas() {
+    canva.width = window.innerWidth;
+    canva.height = window.innerHeight;
+    buildStitches();
+}
+
 const SIZE = 10;
 const SPEED = 0.8;
 
@@ -43,6 +49,7 @@ const pattern = [
   [0,0,1,2,2,2,1,0,0,0,1,2,2,2,1,0,0],
   [0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0],
 ];
+
 
 // CLASSE CUCITO
 class Cucito {
@@ -134,37 +141,48 @@ class Cucito {
     }
 }
 
-// COSTRUZIONE PUNTI
+
 let stitches = [];
-const offsetX = 150 - (pattern[0].length * SIZE) / 2;
-const offsetY = canva.height / 2 - (pattern.length * SIZE) / 2;
-
-pattern.forEach((row, y) => {
-    row.forEach((cell, x) => {
-        if (cell !== 0) {
-            stitches.push(
-                new Cucito(
-                    offsetX + x * SIZE,
-                    offsetY + y * SIZE,
-                    SIZE,
-                    palette[cell]
-                )
-            );
-        }
-    });
-});
-
-// RAGGRUPPA PER COLORE
-const colorGroups = {};
-stitches.forEach(s => {
-    if (!colorGroups[s.color]) colorGroups[s.color] = [];
-    colorGroups[s.color].push(s);
-});
-const colors = Object.keys(colorGroups);
-
-// CONTROLLER
+let colorGroups = {};
+let colors = [];
 let colorIndex = 0;
 let stitchIndex = 0;
+
+// COSTRUZIONE PUNTI
+function buildStitches() {
+    stitches = [];
+    colorGroups = {};
+
+    const offsetX = canva.width / 2 - (pattern[0].length * SIZE) / 2;
+    const offsetY = canva.height / 2 - (pattern.length * SIZE) / 2;
+
+    pattern.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell !== 0) {
+                stitches.push(
+                    new Cucito(
+                        offsetX + x * SIZE,
+                        offsetY + y * SIZE,
+                        SIZE,
+                        palette[cell]
+                    )
+                );
+            }
+        });
+    });
+
+    // ricrea gruppi colore
+    stitches.forEach(s => {
+        if (!colorGroups[s.color]) colorGroups[s.color] = [];
+        colorGroups[s.color].push(s);
+    });
+
+    // array ordinato dei colori
+    colors = Object.keys(colorGroups);
+
+    colorIndex = 0;
+    stitchIndex = 0;
+}
 let pauseCounter = 0;
 
 function animate() {
@@ -198,4 +216,7 @@ function animate() {
     }
 }
 
+resizeCanvas();
 animate();
+
+window.addEventListener('resize', resizeCanvas);
