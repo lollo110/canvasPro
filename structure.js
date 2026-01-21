@@ -1,15 +1,13 @@
 let canva = document.querySelector("canvas");
 let context = canva.getContext("2d");
 let image = document.querySelector("img");
-
-canva.width = window.innerWidth - 20;
-canva.height = window.innerHeight;
-
 const path = {
   p0: { x: -100, y: 150 },
   p1: { x: canva.width / 2 - 100, y: canva.height - 240 },
   p2: { x: canva.width + 100, y: 180 },
 };
+
+
 
 var gravity = 1;
 var friction = 0.9;
@@ -215,6 +213,11 @@ class Filo {
     ];
   }
 
+  resize() {
+        this.x = Math.random() * canva.width;
+        this.y = Math.random() * canva.height; // distribuiti su tutto lo schermo
+    }
+
   update() {
     this.phase += 0.02;
     this.y += this.speed;
@@ -260,13 +263,17 @@ class Filo {
 
 class MicroX {
   constructor() {
-    this.x = Math.random() * canva.width;
-    this.y = Math.random() * canva.height;
+    this.resize();
     this.size = 3 + Math.random() * 3;
     this.speed = 0.3 + Math.random() * 0.5;
     this.rotation = Math.random() * Math.PI;
     this.opacity = 0.7 + Math.random() * 0.3;
   }
+
+  resize() {
+        this.x = Math.random() * canva.width;
+        this.y = Math.random() * canva.height;
+    }
 
   update() {
     this.y += this.speed;
@@ -347,5 +354,32 @@ div.addEventListener("click", () => {
 
   agoAttivo = true;
 });
+function resizeCanvas() {
+    canva.width = window.innerWidth - 20;
+    canva.height = window.innerHeight;
+    // Aggiorna path
+    path.p1 = { x: canva.width / 2 - canva.width * 0.1, y: canva.height - 240 };
+    path.p2 = { x: canva.width + 100, y: 180 };
 
+image.style.transform = `translate(-50%, -50%) scale(${Math.min(canva.width, canva.height)/800})`;
+
+    // Aggiorna centro dei rettangoli
+    const size = Math.min(200, canva.width * 0.2); // puoi adattarlo in base alla larghezza se vuoi
+    const centerX = canva.width / 2;
+    const centerY = canva.height / 2;
+
+    retts[0].cx = centerX - 1.5 * size;
+    retts[0].cy = centerY;
+    retts[1].cx = centerX - 0.5 * size;
+    retts[1].cy = centerY;
+    retts[2].cx = centerX + 0.5 * size;
+    retts[2].cy = centerY;
+    retts[3].cx = centerX + 1.5 * size;
+    retts[3].cy = centerY;
+
+    fili.forEach(f => f.resize());
+    microXs.forEach(x => x.resize());
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas()
 animate();

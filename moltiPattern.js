@@ -1,25 +1,26 @@
 const canva = document.querySelector("canvas");
 const context = canva.getContext("2d");
 
-canva.width = innerWidth;
-canva.height = innerHeight;
-
 function resizeCanvas() {
   canva.width = window.innerWidth;
   canva.height = window.innerHeight;
 }
+resizeCanvas();
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  createPatterns();
+});
 
-const SIZE = 6; // più grande per pattern visibili
-const SPEED = 0.8;
+let patterns = [];
+const SPEED = 200;
+const minSize = 3; // dimensione minima punti
 
-// Palette generiche
 const palettes = [
   { 1: "#27397A", 2: "#4D72B3", 3: "#F2D24F", 4: "#936B30" },
   { 1: "#FFD700", 2: "#FFA500", 3: "#FFF", 4: "#000" },
   { 1: "#32CD32", 2: "#228B22", 3: "#000", 4: "#FFF" },
 ];
 
-// --- CLASSI ---
 class Cucito {
   constructor(x, y, size, color) {
     this.x = x;
@@ -56,41 +57,37 @@ class Cucito {
   }
 
   draw(offsetX = 0, offsetY = 0) {
-  let needlePos = null;
+    let needlePos = null;
 
-  const x = this.x + offsetX;
-  const y = this.y + offsetY;
+    const x = this.x + offsetX;
+    const y = this.y + offsetY;
 
-  if (this.state === 1)
-    needlePos = this.drawSegment(
-      x, y,
-      x + this.size, y + this.size,
-      this.progress
-    );
+    if (this.state === 1)
+      needlePos = this.drawSegment(
+        x,
+        y,
+        x + this.size,
+        y + this.size,
+        this.progress,
+      );
 
-  if (this.state >= 2)
-    this.drawSegment(
-      x, y,
-      x + this.size, y + this.size,
-      1
-    );
+    if (this.state >= 2)
+      this.drawSegment(x, y, x + this.size, y + this.size, 1);
 
-  if (this.state === 3)
-    needlePos = this.drawSegment(
-      x + this.size, y,
-      x, y + this.size,
-      this.progress
-    );
+    if (this.state === 3)
+      needlePos = this.drawSegment(
+        x + this.size,
+        y,
+        x,
+        y + this.size,
+        this.progress,
+      );
 
-  if (this.state >= 4)
-    this.drawSegment(
-      x + this.size, y,
-      x, y + this.size,
-      1
-    );
+    if (this.state >= 4)
+      this.drawSegment(x + this.size, y, x, y + this.size, 1);
 
-  return needlePos;
-}
+    return needlePos;
+  }
 
   update() {
     if (this.state === 1 || this.state === 3) {
@@ -103,62 +100,30 @@ class Cucito {
   }
 }
 
-// Classe per pattern generici
 class PatternStitches {
-  constructor(pattern, palette, offsetX, offsetY) {
+  constructor(pattern, palette, offsetX, offsetY, size) {
     this.stitches = [];
-    this.baseX = offsetX;
-    this.baseY = offsetY;
-
-    this.time = Math.random() * 1000;
-
+    this.colorGroups = {};
     pattern.forEach((row, y) => {
       row.forEach((cell, x) => {
         if (cell !== 0) {
-          this.stitches.push(
-            new Cucito(
-              offsetX + x * SIZE,
-              offsetY + y * SIZE,
-              SIZE,
-              palette[cell] || "#000",
-            ),
-          );
+          const s = new Cucito(offsetX + x * size, offsetY + y * size, size, palette[cell]);
+          this.stitches.push(s);
+          if (!this.colorGroups[s.color]) this.colorGroups[s.color] = [];
+          this.colorGroups[s.color].push(s);
         }
       });
     });
-
-    // centro verticale (corpo)
-    const ys = this.stitches.map(s => s.y);
-    this.centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
-
-    this.colorGroups = {};
-    this.stitches.forEach((s) => {
-      if (!this.colorGroups[s.color]) this.colorGroups[s.color] = [];
-      this.colorGroups[s.color].push(s);
-    });
-
     this.colors = Object.keys(this.colorGroups);
     this.colorIndex = 0;
     this.stitchIndex = 0;
   }
 
   draw() {
-    const flap = Math.sin(this.time) * 10;
-
-    this.stitches.forEach((s) => {
-      const dist = s.y - this.centerY;
-
-      // ali sopra e sotto
-      const wingFactor = Math.abs(dist) / 40;
-      const deformY = flap * wingFactor * Math.sign(dist);
-
-      s.draw(0, deformY);
-    });
+    this.stitches.forEach(s => s.draw());
   }
 
   update() {
-    this.time += 0.08;
-
     const currentColor = this.colors[this.colorIndex];
     const group = this.colorGroups[currentColor];
     const stitch = group?.[this.stitchIndex];
@@ -176,9 +141,6 @@ class PatternStitches {
     }
   }
 }
-
-// --- PATTERN PIXEL ART ---
-
 
 const butterflyPattern = [
   [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -205,9 +167,8 @@ const butterflyPattern = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0],
 ];
 
-
 const butterflyPattern2 = [
-    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
@@ -230,10 +191,9 @@ const butterflyPattern2 = [
   [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 4, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0],
 ];
-
 
 const butterflyPattern3 = [
-    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
@@ -257,26 +217,30 @@ const butterflyPattern3 = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0],
 ];
 
-// --- CREAZIONE ISTANZE ---
-const patterns = [
-  new PatternStitches(butterflyPattern, palettes[0], 150, 100),
-  new PatternStitches(butterflyPattern2, palettes[1], 150, canva.height / 2),
-  new PatternStitches(butterflyPattern3, palettes[2], 550, 100),
-];
+// --- CREA PATTERN PROPORZIONALI ---
+function createPatterns() {
+  const scalePattern = canva.width / 1200; // ridimensiona in base alla larghezza
+  const size = Math.max(minSize, 6 * scalePattern); // mai più piccolo di minSize
 
-// --- ANIMAZIONE ---
+  const gapX = canva.width / 4;
+  const startY = canva.height / 4;
+
+  patterns = [
+    new PatternStitches(butterflyPattern, palettes[0], gapX * 0.5, startY, size),
+    new PatternStitches(butterflyPattern2, palettes[1], gapX * 1.5, startY, size),
+    new PatternStitches(butterflyPattern3, palettes[2], gapX * 2.5, startY, size),
+  ];
+}
+
+createPatterns();
+
 function animate() {
-  requestAnimationFrame(animate);
   context.clearRect(0, 0, canva.width, canva.height);
-  patterns.forEach((p) => {
+  patterns.forEach(p => {
     p.draw();
     p.update();
   });
+  requestAnimationFrame(animate);
 }
 
 animate();
-
-window.addEventListener('resize', function(){
-    resizeCanvas();
-    animate();
-})
