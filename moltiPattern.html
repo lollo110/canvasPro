@@ -4,9 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        body {
+        background-color: #e5d6c0;
+        overflow: hidden;
+      }
+        img{
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%) scale(1);
+            opacity: 0;
+            transition: transform 2s ease-in-out, opacity 2s ease-in-out;
+            width: 30%;
+        }
+    </style>
 </head>
 <body>
     <canvas></canvas>
+    <img src="./logofina.svg" alt="">
     <script src="./moltiPattern.js"></script>
 </body>
 </html>
