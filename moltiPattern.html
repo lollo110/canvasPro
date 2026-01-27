@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+
+        *{
+            margin: 0;
+        }
         body {
         background-color: #e5d6c0;
         overflow: hidden;
@@ -17,6 +21,13 @@
             opacity: 0;
             transition: transform 2s ease-in-out, opacity 2s ease-in-out;
             width: 30%;
+        }
+
+        @media (max-width: 425px){
+            img{
+                top: 40%;
+                width: 40%;
+            }
         }
     </style>
 </head>
